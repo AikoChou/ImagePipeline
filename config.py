@@ -15,7 +15,7 @@ _GLOBAL_CONFIG = dict(
 _DATA_CONFIG = dict(
     train_data = [f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-000.tfrecords'],
     eval_data = [f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-001.tfrecords'],
-    img_size = 160,
+    img_size = (160, 160, 3)
     buffer_size = 1000
 )
 
@@ -23,13 +23,13 @@ _MODEL_CONFIG = dict(
     weights_to_load = f'{cluster_pack.get_default_fs()}user/{USER}/mobilenet/variables/variables',
     load_var_name = True,
     layer_to_train = 'dense',
-    opt = 'gradient_descent',
-    loss_fn = 'binary_crossentropy',
-    metric_fn = 'binary_accuracy',
+    train_steps = 1000,
+    eval_steps = None,
     batch_size = 256,
     learning_rate = 1e-3,
-    train_steps = 1000,
-    eval_steps = None
+    opt = 'gradient_descent',
+    loss_fn = 'binary_crossentropy',
+    metric_fn = 'binary_accuracy'
 )
 
 _PYENV_CONFIG = dict(
@@ -38,7 +38,7 @@ _PYENV_CONFIG = dict(
 )
 
 _RESOURCE_CONFIG = dict(
-    gpu = dict(        
+    gpu = dict(
         queue = 'fifo',
         chief = dict(memory='8 GiB', vcores=4, instances=1),
         worker = dict(memory='8 GiB', vcores=4, instances=4),
@@ -58,7 +58,7 @@ _HADOOP_ENV_CONFIG = dict(
     java_home = '/usr/lib/jvm/java-8-openjdk-amd64',
     hadoop_home = '/usr/lib/hadoop',
     hadoop_conf_dir = '/usr/lib/hadoop/etc/hadoop',
-    ld_library_path = ['${JAVA_HOME}/jre/lib/amd64/server', 
+    ld_library_path = ['${JAVA_HOME}/jre/lib/amd64/server',
                        '/usr/lib'],
     classpath = '$(${HADOOP_HOME}/bin/hadoop classpath --glob)',
     krb5ccname = '/tmp/krb5cc_$(id -u)',
@@ -86,7 +86,7 @@ def _inherit(base, child):
 def get_config(device='cpu'):
     resource_config = _RESOURCE_CONFIG[device]
     cfg = Config(device = device, **reduce(
-        _inherit, [_GLOBAL_CONFIG, _HADOOP_ENV_CONFIG, _MIOPEN_CONFIG, 
-                   _DATA_CONFIG, _MODEL_CONFIG, _PYENV_CONFIG, 
+        _inherit, [_GLOBAL_CONFIG, _HADOOP_ENV_CONFIG, _MIOPEN_CONFIG,
+                   _DATA_CONFIG, _MODEL_CONFIG, _PYENV_CONFIG,
                    resource_config]))
     return cfg

@@ -5,10 +5,10 @@ cfg = config.get_config()
 
 def parse_example(example):
     features = tf.io.parse_single_example(example, features={
-        "image": tf.io.FixedLenFeature([cfg.img_size * cfg.img_size * 3], dtype=tf.float32),
+        "image": tf.io.FixedLenFeature([cfg.img_size[0]*cfg.img_size[1]*cfg.img_size[2]], dtype=tf.float32),
         "label": tf.io.FixedLenFeature([], dtype=tf.float32)
     })
-    x = tf.reshape(features["image"], [cfg.img_size, cfg.img_size, 3])
+    x = tf.reshape(features["image"], cfg.img_size)
     y = features["label"]
     return x, y
 
