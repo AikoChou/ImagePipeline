@@ -49,7 +49,7 @@ model = tf.keras.Sequential([
         ])
 
 model_json = model.to_json()
-with open('model.json', 'w') as json_file:
+with open('keras_model/model.json', 'w') as json_file:
     json_file.write(model_json)
 ```
 
@@ -83,7 +83,7 @@ _GLOBAL_CONFIG = dict(
 _DATA_CONFIG = dict(
     train_data = [f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-000.tfrecords'],
     eval_data = [f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-001.tfrecords'],
-    img_size = [160, 160, 3]
+    img_size = (160, 160, 3)
     buffer_size = 1000
 )
 ```
@@ -117,6 +117,6 @@ Other blocks of configuration can remain unchanged, such as `_RESOURCE_CONFIG` t
 After setting the above things, we can run the script. You can choose from two versions, one is running on CPU nodes, and the other is running on GPU nodes.
 
 ```bash
-$ python train.py # for CPU nodes
-$ python train_on_gpu.py # GPU nodes
+$ python scripts/train.py # for CPU nodes
+$ python scripts/train_on_gpu.py # GPU nodes
 ```
