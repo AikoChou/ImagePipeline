@@ -37,9 +37,9 @@ $ pip install --ignore-installed -r requirements.txt
 
 To run the script for training an image classifier, you need to
 
-- Save your neural network model to JSON
-- Upload your data to HDFS
-- Setup the Config file
+- Save your neural network model to JSON;
+- Upload your data to HDFS;
+- Setup the Config file.
 
 First, Keras provides the ability to describe any model in JSON format through the `to_json()` function. This can be saved to a file and then loaded via the `model_from_json()` function, which will create a new model from the JSON specification.
 
@@ -53,7 +53,7 @@ with open('keras_model/model.json', 'w') as json_file:
     json_file.write(model_json)
 ```
 
-Upload the prepared training and test data saved as TFRecord files to HDFS
+Upload the prepared training and test data saved as TFRecord files to HDFS.
 
 ```bash
 $ hadoop fs -copyFromLocal your_data.tfrecords folder_on_hdfs/
@@ -119,4 +119,50 @@ After setting the above things, we can run the script. You can choose from two v
 ```bash
 $ python scripts/train.py # for CPU nodes
 $ python scripts/train_on_gpu.py # GPU nodes
+```
+
+### Checking out the performance
+
+To know the accuracy of the model after training, we can look at the yarn logs.
+
+```bash
+$ yarn logs -applicationId application_xxxxxxxxxxxxx_xxxxx
+```
+
+In the **evaluator.log**, we can see the evaluation accuracy and loss for the final training step.
+
+```bash
+...
+2021-06-30 14:41:30,411:INFO:tensorflow: Finished evaluation at 2021-06-30-14:41:30
+2021-06-30 14:41:30,412:INFO:tensorflow: Saving dict for global step 1007: binary_accuracy = 0.6373899, global_step = 1007, loss = 0.63418937
+2021-06-30 14:41:30,474:INFO:tensorflow: Saving 'checkpoint_path' summary for global step 1007: hdfs://analytics-hadoop/user/aikochou/tf_yarn/tf_yarn_1625063221/model.ckpt-1007
+2021-06-30 14:41:30,479:DEBUG:tensorflow: Calling exporter with the `is_the_final_export=True`.
+2021-06-30 14:41:30,480:INFO:tensorflow: Waiting 453.976144 secs before starting next eval run.
+2021-06-30 14:49:04,488:INFO:tensorflow: Exiting evaluation, global_step=1007 >= train max_steps=1000
+2021-06-30 14:49:04,498:INFO:__main__: evaluator:0 SUCCEEDED
+```
+In addition, the locations at which the checkpoints saved are shown. By setting the `weights_to_load` in the config file to the latest checkpoint,  you can warm start from the model status and continue to train the model.
+
+
+In the **chief.log**, we can see the initial loss and the loss for final step.
+
+```bash
+2021-06-30 14:27:25,565:INFO:tensorflow: loss = 0.87347865, step = 0
+2021-06-30 14:28:11,977:INFO:tensorflow: global_step/sec: 2.30507
+2021-06-30 14:28:49,234:INFO:tensorflow: global_step/sec: 2.81827
+2021-06-30 14:29:30,823:INFO:tensorflow: global_step/sec: 2.83734
+2021-06-30 14:30:23,872:INFO:tensorflow: global_step/sec: 2.58249
+2021-06-30 14:31:04,625:INFO:tensorflow: global_step/sec: 2.82185
+2021-06-30 14:31:39,712:INFO:tensorflow: global_step/sec: 3.10662
+2021-06-30 14:31:41,813:INFO:tensorflow: loss = 0.64253294, step = 694 (256.248 sec)
+2021-06-30 14:32:15,668:INFO:tensorflow: global_step/sec: 3.05927
+2021-06-30 14:32:19,758:INFO:tensorflow: Calling checkpoint listeners before saving checkpoint 817...
+2021-06-30 14:32:19,758:INFO:tensorflow: Saving checkpoints for 817 into hdfs://analytics-hadoop/user/aikochou/tf_yarn/tf_yarn_1625063221/model.ckpt.
+2021-06-30 14:32:20,674:INFO:tensorflow: Calling checkpoint listeners after saving checkpoint 817...
+2021-06-30 14:32:50,571:INFO:tensorflow: global_step/sec: 3.06574
+2021-06-30 14:33:23,267:INFO:tensorflow: Calling checkpoint listeners before saving checkpoint 1007...
+2021-06-30 14:33:23,268:INFO:tensorflow: Saving checkpoints for 1007 into hdfs://analytics-hadoop/user/aikochou/tf_yarn/tf_yarn_1625063221/model.ckpt.
+2021-06-30 14:33:24,361:INFO:tensorflow: Calling checkpoint listeners after saving checkpoint 1007...
+2021-06-30 14:33:24,471:INFO:tensorflow: Loss for final step: 0.6461505.
+2021-06-30 14:33:24,482:INFO:__main__: chief:0 SUCCEEDED
 ```
