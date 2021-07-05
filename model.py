@@ -1,6 +1,7 @@
 import config
 import tensorflow as tf
 import os
+import json
 
 cfg = config.get_config()
 
@@ -31,8 +32,8 @@ metrics = {'binary_accuracy': _binary_accuracy,
 
 def model_fn(features, labels, mode):
     model_file = os.path.join('keras_model', 'model.json') if os.path.isdir('keras_model') else 'model.json'
-    with open(model_file) as f:
-        var_name = json.load(f)
+    with open(model_file, 'r') as f:
+        model_json = f.read()
     model = tf.keras.models.model_from_json(model_json)
     logits = model(features)
 
