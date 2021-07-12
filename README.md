@@ -1,6 +1,11 @@
 # ImagePipeline
 An image pipeline for training image classifiers on the Hadoop cluster
 
+## Synopsis
+WMF Research team has been working on projects related to computer vision tools, such as prototypes of image classifiers trained on Commons categories. The project aimed to develop prototypes to evaluate the feasibility of developing in-house computer vision tools to support future platform evolution. 
+
+We'd now like to expand the similar training procedures on the cluster, so we could fully utilize the 6 GPUs on 6 different nodes on our Analytics cluster. By using Yarn labels to run [tf-yarn](https://github.com/criteo/tf-yarn), we were able to run tensorflow-rocm on GPU nodes and run common tensorflow on nodes without GPU.
+
 ## Getting started
 
 Connect to stat1008 through ssh 
@@ -41,6 +46,8 @@ To run the script for training an image classifier, you need to
 - Upload your data to HDFS;
 - Setup the Config file.
 
+#### Prepare model
+
 First, Keras provides the ability to describe any model in JSON format through the `to_json()` function. This can be saved to a file and then loaded via the `model_from_json()` function, which will create a new model from the JSON specification.
 
 ```python
@@ -53,15 +60,43 @@ with open('keras_model/model.json', 'w') as json_file:
     json_file.write(model_json)
 ```
 
-Upload the prepared training and test data saved as TFRecord files to HDFS.
+The JSON format of the model will be loaded in the model function `model_fn` in model.py:
+```python
+def model_fn(features, labels, mode):
+    model_file = os.path.join('keras_model', 'model.json') 
+                        if os.path.isdir('keras_model') else 'model.json'
+    with open(model_file, 'r') as f:
+        model_json = f.read()
+    model = tf.keras.models.model_from_json(model_json)
+    ...
+```
+Here `model_fn` is a function which given inputs and a number of other parameters, returns the ops necessary to perform training, evaluation, or predictions. Currently, we provide a simple template for image classifiers for both binary classification or multi-classification. You can use the template by specifying pre-defined loss, metric, and optimizer in the config file (it will be explained later) or you can rewrite the whole `model_fn` on your own.
+
+#### Prepare input data
+
+Secondly, upload the training and evaluation data saved as TFRecord files to HDFS.
 
 ```bash
 $ hadoop fs -copyFromLocal your_data.tfrecords folder_on_hdfs/
 ```
 
+The data will be loaded in the input function `input_fn` in data.py:
+```python
+def input_fn(mode, input_context=None):
+    if mode == tf.estimator.ModeKeys.TRAIN:
+        dataset = tf.data.TFRecordDataset(cfg.train_data).map(parse_example)
+        ...
+    else:
+        dataset = tf.data.TFRecordDataset(cfg.eval_data).map(parse_example)
+        ...
+```
+Here function `input_fn` provides input data for training, evaluation, or predictions as minibatches. One needs to parse the data by specifying the data format saved in the TFRecords and perform normalization if needed.
+
+#### Setup the Config file
+
 The Config file contains parameters for various purposes in the pipeline. The basic is to modify `_GLOBAL_CONFIG`, `_DATA_CONFIG`, and `_MODEL_CONFIG`.
 
-**_GLOBAL_CONFIG**
+*_GLOBAL_CONFIG*
 - `name` the name of the yarn application
 - `hdfs_dir` the location on HDFS at which the model and its checkpoints will be saved
 
@@ -72,7 +107,7 @@ _GLOBAL_CONFIG = dict(
 )
 ```
 
-**_DATA_CONFIG**
+*_DATA_CONFIG*
 
 - `train_data` the location for the training data on HDFS. If there are multiple files, a list is given
 - `eval_data` the location for the evaluation data on HDFS. If there are multiple files, a list is given
@@ -88,7 +123,7 @@ _DATA_CONFIG = dict(
 )
 ```
 
-**_MODEL_CONFIG**
+*_MODEL_CONFIG*
 
 - `weights_to_load` warm starts from pre-trained weights or the weights saved in a checkpoint on HDFS
 - `load_var_name` whether to load a dict of name mapping for the name of the variable between previous checkpoint (or pre-trained model) and current model. If true, a 'var_name.json' file needs to provided
@@ -114,7 +149,9 @@ _MODEL_CONFIG = dict(
 
 Other blocks of configuration can remain unchanged, such as `_RESOURCE_CONFIG` that provide default settings to resources for distributed tasks, and `_HADOOP_ENV_CONFIG` that set up all the environment variables to have Tensorflow working with HDFS.
 
-After setting the above things, we can run the script. You can choose from two versions, one is running on CPU nodes, and the other is running on GPU nodes.
+#### Run the script
+
+After setting the above things, we can run training procedures on the cluster. You can choose from two versions, one is running on CPU nodes, and the other is running on GPU nodes.
 
 ```bash
 $ python scripts/train.py # for CPU nodes
