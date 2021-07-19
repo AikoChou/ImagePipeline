@@ -9,11 +9,11 @@ We did several experiments for measuring performance in terms of time and accura
 |                     | epoch | accuracy | loss   | time   |
 |---------------------|-------|----------|--------|--------|
 | GPU on stat machine | 50    | 65.1%    | 0.5931 | 57m8s  |
-| GPU on cluster      | 97    | 68.8%    | 0.5805 | 34m41s |
+| GPU on cluster      | 50    | 66.6%    | 0.6051 | 21m28s |
 
 In this experiment, there is 1 GPU on the stat machine, and the intra- and inter- parallelism threads for tensorflow were set to 6. The image quality classifier was training with Keras API with model.fit. On the other hand, on the cluster, the classifier was training with Estimators API with the Parameter Server Strategy on 6 GPUs.
 
-The batch size for both was set to 512, on the stat the classifier was trained for 50 epochs, and on the cluster, the classifier was trained for around 100 epochs. The training dataset and the evaluation dataset have about 20k images each, and the label distribution is balanced. 
+The batch size for both was set to 512, and the classifier was trained for 50 epochs. The training dataset and the evaluation dataset have about 20k images each, and the label distribution is balanced. 
 
 The result shows the classifier training on the cluster can achieve more or less the same accuracy, and better accuracy with more epochs. Regarding elapsed time, the distributed training on the cluster is 3x faster than training on the stat machine.
 
