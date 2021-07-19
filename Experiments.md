@@ -31,9 +31,13 @@ Both classifiers were training with Estimators API with the Parameter Server Str
 The result shows classifiers can achieve the same accuracy and loss either on the CPU-only nodes or GPU nodes. Regarding the elapsed time, it is surprising that training on GPU nodes doesn't show more advantages in terms of efficiency which is only 5 minutes faster than training on CPU-only nodes.
 
 
-### Network usage
+### Solved the problem of the Parameter Server being the bottleneck for computation
 
-We investigated how the batch size affects the network usage for the Parameter Server (ps) when using ParameterServerStrategy as the distribution strategy.
+One issue we encountered in the experiment was the surge in network traffic ~1GB/s towards GPU nodes. The reason is that the worker dispatching weights to the Parameter Server was overloaded and saturated the network. Therefore, we looked for ways to reduce or re-distribute this load. 
+
+First, we tried to move the Parameter Server to CPU nodes and increase their number. However, we found that although non-GPU nodes can be assigned to non-GPU tasks, the load cannot be shared evenly among multiple parameter servers.
+
+Next, we tried to increase the batch size used for training because we believe that a small batch size results in frequent updates of model variables. Under the ParameterServerStrategy, workers communicate with PS to save and get model variables, so frequent updates cause high network traffic. Finally, we observed a significant decrease in network traffic by increasing the batch size from 32 to 512.
 
 
 ### GPU usage
