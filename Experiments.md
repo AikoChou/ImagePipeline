@@ -109,16 +109,20 @@ However, while training on CPU-only nodes the following errors happen often (3 o
 > Additional GRPC error information from remote target /job:ps/replica:0/task:1:
 > :{"created":"@1626935836.060668055","description":"Error received from peer ipv4:10.64.5.41:52621","file":"external/com_github_grpc_grpc/src/core/lib/surface/call.cc","file_line":1056,"grpc_message":"Socket closed","grpc_status":14}
 
-Try to train 1520 steps (= 10 epochs), but failed.
+**CPU on the cluster vs. GPU on the cluster (more steps)** 
 
 |                | steps | accuracy | loss   | time   |
 |----------------|-------|----------|--------|--------|
 | CPU on cluster | 1520  | -        | -      | failed |
 | GPU on cluster | 1520  | 71.7%    | 0.5532 | 69m58s |
 
+When training 1520 steps (~ 10 epochs), the task was failed on CPU-only nodes. It seems compute-heavy training tasks on the entire graph is unstable on the CPU-only nodes.
+
+**GPU on stat machine vs. GPU on the cluster (more steps and more training data)** 
 
 |                | steps | accuracy | loss   | time   |
 |----------------|-------|----------|--------|--------|
 | GPU on stat machine | 1560  | 74.9% | 0.5064 | 5h24m |
 | GPU on cluster | 1560  | 74.3%    | 0.5105 | 1h9m |
 
+The experiment is to compare the GPU on the stat with the GPU in the cluster when training the entire model with the larger dataset. The training dataset is increased to ~80k images, and the test dataset is ~20k images. The result shows the distributed training on the cluster is 4.69x faster than the training on the stat machine.
