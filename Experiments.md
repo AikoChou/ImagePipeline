@@ -116,3 +116,9 @@ Try to train 1520 steps (= 10 epochs), but failed.
 | CPU on cluster | 1520  | -        | -      | failed |
 | GPU on cluster | 1520  | 71.7%    | 0.5532 | 69m58s |
 
+
+|                | steps | accuracy | loss   | time   |
+|----------------|-------|----------|--------|--------|
+| GPU on stat machine | 1560  | 74.9% | 0.5064 | 5h24m |
+| GPU on cluster | 1560  | 74.3%    | 0.5105 | 1h9m |
+
