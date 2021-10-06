@@ -13,19 +13,24 @@ _GLOBAL_CONFIG = dict(
 )
 
 _DATA_CONFIG = dict(
-    train_data = [f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-000.tfrecords'],
-    eval_data = [f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-001.tfrecords'],
-    img_size = (160, 160, 3)
+    train_data = [
+        f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-000.tfrecords',
+        f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-001.tfrecords',
+        f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-002.tfrecords',
+        f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-004.tfrecords',
+        f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-005.tfrecords'],
+    eval_data = [f'{cluster_pack.get_default_fs()}user/{USER}/pixels-160x160-shuffle-003.tfrecords'],
+    img_size = (160, 160, 3),
     buffer_size = 1000
 )
 
 _MODEL_CONFIG = dict(
     weights_to_load = f'{cluster_pack.get_default_fs()}user/{USER}/mobilenet/variables/variables',
     load_var_name = True,
-    layer_to_train = 'dense',
-    train_steps = 1000,
+    layer_to_train = '',
+    train_steps = 10000,
     eval_steps = None,
-    batch_size = 256,
+    batch_size = 512,
     learning_rate = 1e-3,
     opt = 'gradient_descent',
     loss_fn = 'binary_crossentropy',
@@ -33,7 +38,7 @@ _MODEL_CONFIG = dict(
 )
 
 _PYENV_CONFIG = dict(
-    gpu_env = '/home/aikochou/tf-yarn-rocm.zip',
+    gpu_env = '/home/aikochou/tf-rocm-2.5.zip',
     cpu_env = '/home/aikochou/tf-yarn-env.zip'
 )
 
